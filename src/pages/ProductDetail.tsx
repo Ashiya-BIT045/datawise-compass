@@ -1,0 +1,252 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Calendar, MapPin, Shield, TrendingUp, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { products, categories } from "@/data/products";
+import GatedContent from "@/components/shared/GatedContent";
+import {
+  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+
+const COLORS = ["hsl(221,83%,53%)", "hsl(262,83%,58%)", "hsl(160,84%,39%)", "hsl(43,96%,56%)", "hsl(0,84%,60%)", "hsl(200,80%,50%)"];
+
+const ProductDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const product = products.find((p) => p.id === id);
+
+  if (!product) {
+    return (
+      <main className="pt-24 pb-12 container mx-auto px-4 text-center">
+        <p className="text-muted-foreground">Product not found</p>
+        <Button variant="ghost" onClick={() => navigate("/catalog")} className="mt-4">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Catalog
+        </Button>
+      </main>
+    );
+  }
+
+  const cat = categories.find((c) => c.id === product.category);
+
+  return (
+    <main className="pt-20 pb-12">
+      <div className="container mx-auto px-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")} className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-1" /> Back
+        </Button>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
+                  {product.category.replace("-", " ")}
+                </span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Updated {product.lastUpdated}
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">{product.name}</h1>
+              <p className="text-muted-foreground max-w-2xl">{product.description}</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="outline">Request Sample</Button>
+              <Button className="gradient-primary border-0 text-primary-foreground">
+                <Download className="w-4 h-4 mr-1" /> Get Data
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-muted/50">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="volumes">Volumes & Samples</TabsTrigger>
+            <TabsTrigger value="sample">Sample Data</TabsTrigger>
+            <TabsTrigger value="dictionary">Data Dictionary</TabsTrigger>
+            <TabsTrigger value="related">Related</TabsTrigger>
+          </TabsList>
+
+          {/* Overview */}
+          <TabsContent value="overview">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: "Total Volume", value: `${(product.volume / 1000000).toFixed(1)}M`, sub: "records" },
+                { label: "Confidence", value: `${product.confidenceScore}%`, sub: "accuracy" },
+                { label: "Match Rate", value: `${product.matchRate}%`, sub: "coverage" },
+                { label: "Price", value: product.priceRange, sub: "per record" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="p-5 rounded-2xl bg-card border border-border">
+                  <div className="text-xs text-muted-foreground mb-1">{kpi.label}</div>
+                  <div className="text-2xl font-display font-bold text-primary">{kpi.value}</div>
+                  <div className="text-xs text-muted-foreground">{kpi.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Confidence Circle + Pie */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold mb-4">Confidence Score</h3>
+                <div className="flex items-center justify-center">
+                  <div className="relative w-40 h-40">
+                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                      <circle cx="50" cy="50" r="42" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="50" cy="50" r="42"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${product.confidenceScore * 2.64} ${264 - product.confidenceScore * 2.64}`}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-3xl font-display font-bold">{product.confidenceScore}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold mb-4">Industry Breakdown</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={product.industries} dataKey="percentage" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}>
+                      {product.industries.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {product.compliance.map((c) => (
+                <span key={c} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-emerald/10 text-emerald">
+                  <Shield className="w-3 h-3" /> {c}
+                </span>
+              ))}
+              {product.geography.map((g) => (
+                <span key={g} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground">
+                  <MapPin className="w-3 h-3" /> {g}
+                </span>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Volumes */}
+          <TabsContent value="volumes">
+            <GatedContent feature="fullAnalytics">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-2xl bg-card border border-border">
+                  <h3 className="font-semibold mb-4">Volume by Region</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={product.volumeByRegion}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="region" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
+                      <Tooltip />
+                      <Bar dataKey="volume" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="p-6 rounded-2xl bg-card border border-border">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald" /> Growth Trend
+                  </h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={product.growthTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="volume" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </GatedContent>
+          </TabsContent>
+
+          {/* Sample Data */}
+          <TabsContent value="sample">
+            <GatedContent feature="sampleData">
+              <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        {product.sampleFields.map((f) => (
+                          <th key={f} className="px-4 py-3 text-left font-medium text-muted-foreground">{f}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, row) => (
+                        <tr key={row} className="border-b border-border last:border-0">
+                          {product.sampleFields.map((f, col) => (
+                            <td key={col} className="px-4 py-3 text-muted-foreground">
+                              {row < 2 ? `Sample ${f} ${row + 1}` : "••••••••"}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </GatedContent>
+          </TabsContent>
+
+          {/* Data Dictionary */}
+          <TabsContent value="dictionary">
+            <GatedContent feature="dataDictionary">
+              <div className="space-y-3">
+                {product.dataDictionary.map((field) => (
+                  <div key={field.field} className="p-4 rounded-xl bg-card border border-border">
+                    <div className="flex items-center gap-3 mb-2">
+                      <code className="text-sm font-mono font-bold text-primary">{field.field}</code>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{field.type}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">{field.description}</p>
+                    <p className="text-xs text-muted-foreground">Example: <code className="text-foreground">{field.example}</code></p>
+                  </div>
+                ))}
+              </div>
+            </GatedContent>
+          </TabsContent>
+
+          {/* Related */}
+          <TabsContent value="related">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {products
+                .filter((p) => p.id !== product.id && p.category === product.category)
+                .slice(0, 3)
+                .concat(products.filter((p) => p.id !== product.id && p.category !== product.category).slice(0, 3 - products.filter((p) => p.id !== product.id && p.category === product.category).length))
+                .slice(0, 3)
+                .map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => navigate(`/product/${p.id}`)}
+                    className="cursor-pointer p-5 rounded-2xl bg-card border border-border hover:border-primary/30 hover-lift"
+                  >
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">{p.category.replace("-", " ")}</span>
+                    <h3 className="font-semibold mt-2 mb-1">{p.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{p.shortDescription}</p>
+                    <div className="mt-3 text-xs text-muted-foreground">{(p.volume / 1000000).toFixed(1)}M records · {p.confidenceScore}% confidence</div>
+                  </div>
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </main>
+  );
+};
+
+export default ProductDetail;
