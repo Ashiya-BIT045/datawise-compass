@@ -10,6 +10,15 @@ export interface DataProduct {
   geography: string[];
   compliance: string[];
   priceRange: string;
+  // new pricing model
+  price?: {
+    basic: number;
+    premium: number;
+    enterprise: number;
+  };
+  recommendedPlan?: "basic" | "premium" | "enterprise";
+  availableRecords?: number;
+  downloadable?: boolean;
   growthTrend: { month: string; volume: number }[];
   volumeByRegion: { region: string; volume: number }[];
   sampleFields: string[];
@@ -86,6 +95,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-02-01",
     matchRate: 96,
     tags: ["direct mail", "B2B", "verified addresses"],
+    price: { basic: 99, premium: 199, enterprise: 499 },
+    recommendedPlan: "premium",
+    availableRecords: 4200000,
+    downloadable: true,
   },
   {
     id: "tele-uk-decision-makers",
@@ -124,6 +137,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-01-28",
     matchRate: 89,
     tags: ["telemarketing", "decision makers", "TPS screened"],
+    price: { basic: 149, premium: 299, enterprise: 699 },
+    recommendedPlan: "basic",
+    availableRecords: 2800000,
+    downloadable: true,
   },
   {
     id: "email-b2b-verified",
@@ -162,6 +179,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-02-05",
     matchRate: 97,
     tags: ["email marketing", "verified", "B2B"],
+    price: { basic: 79, premium: 159, enterprise: 399 },
+    recommendedPlan: "premium",
+    availableRecords: 3500000,
+    downloadable: true,
   },
   {
     id: "healthcare-hcp",
@@ -197,6 +218,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-01-15",
     matchRate: 92,
     tags: ["healthcare", "HCP", "pharma", "NHS"],
+    price: { basic: 299, premium: 599, enterprise: 1299 },
+    recommendedPlan: "premium",
+    availableRecords: 820000,
+    downloadable: false,
   },
   {
     id: "new-business-registrations",
@@ -233,6 +258,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-02-11",
     matchRate: 100,
     tags: ["new business", "startups", "Companies House"],
+    price: { basic: 19, premium: 49, enterprise: 149 },
+    recommendedPlan: "basic",
+    availableRecords: 85000,
+    downloadable: true,
   },
   {
     id: "soho-micro-business",
@@ -269,6 +298,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-01-20",
     matchRate: 82,
     tags: ["SOHO", "micro-business", "sole traders"],
+    price: { basic: 39, premium: 89, enterprise: 249 },
+    recommendedPlan: "basic",
+    availableRecords: 5500000,
+    downloadable: true,
   },
   {
     id: "poi-locations",
@@ -305,6 +338,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-02-08",
     matchRate: 94,
     tags: ["POI", "locations", "geocoded", "retail"],
+    price: { basic: 49, premium: 129, enterprise: 399 },
+    recommendedPlan: "premium",
+    availableRecords: 12000000,
+    downloadable: true,
   },
   {
     id: "enrichment-company",
@@ -337,6 +374,10 @@ export const products: DataProduct[] = [
     lastUpdated: "2026-02-10",
     matchRate: 78,
     tags: ["enrichment", "append", "firmographics"],
+    price: { basic: 199, premium: 499, enterprise: 1299 },
+    recommendedPlan: "enterprise",
+    availableRecords: 100000000,
+    downloadable: false,
   },
 ];
 

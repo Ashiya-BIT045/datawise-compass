@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Menu, X, Moon, Sun, LogIn, User, LogOut, Zap, BarChart3 } from "lucide-react";
+import { Search, Menu, X, Moon, Sun, LogIn, User, LogOut, Zap, BarChart3, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+
+const CartButton = () => {
+  const { totalCount, toggle } = useCart();
+  const count = totalCount();
+  return (
+    <Button variant="ghost" size="icon" onClick={toggle} className="relative">
+      <ShoppingCart className="w-4 h-4" />
+      {count > 0 && <span className="absolute -top-2 -right-2 bg-amber text-white text-xs rounded-full px-1">{count}</span>}
+    </Button>
+  );
+};
 
 interface NavbarProps {
   isDark: boolean;
@@ -64,6 +76,8 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="navbar-text">
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
+          {/* Cart button */}
+          <CartButton />
           {isLoggedIn ? (
             <div className="hidden md:flex items-center gap-2">
               <Link to="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg navbar-text text-sm hover:bg-muted/20 transition-colors">

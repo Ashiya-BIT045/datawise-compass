@@ -63,11 +63,11 @@ const HeroSection = () => {
           </div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-primary-foreground leading-tight mb-6">
-            Discover Intelligence.
+            Unlock Deep Insights.
             <br />
-            <span className="text-gradient">Compare Confidence.</span>
+            <span className="text-gradient">Make Confident Comparisons.</span>
             <br />
-            Acquire Smarter.
+            Acquire with Precision.
           </h1>
 
           <p className="text-lg md:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10">

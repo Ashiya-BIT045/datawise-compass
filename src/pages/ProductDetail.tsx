@@ -1,12 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, MapPin, Shield, TrendingUp, Download, Plus, Check } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Shield, TrendingUp, Download, Plus, Check, X as XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { products, categories } from "@/data/products";
 import { useCompare } from "@/contexts/CompareContext";
 import GatedContent from "@/components/shared/GatedContent";
 import { toast } from "sonner";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import UpgradeModal from "@/components/shared/UpgradeModal";
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
@@ -32,6 +36,10 @@ const ProductDetail = () => {
   }
 
   const inCompare = isInCompare(product.id);
+  const { addItem, items, removeItem } = useCart();
+  const { role } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState<"basic" | "premium" | "enterprise">((product.recommendedPlan as any) || "basic");
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   return (
     <main className="pt-20 pb-12">
@@ -151,6 +159,60 @@ const ProductDetail = () => {
                 </span>
               ))}
             </div>
+
+            {/* Purchase Section */}
+            <div className="mt-8 p-6 rounded-2xl bg-card border border-border">
+              <h3 className="font-semibold mb-3">Purchase Dataset</h3>
+              <p className="text-sm text-muted-foreground mb-4">Choose a plan — prices shown are per dataset bundle.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {(["basic", "premium", "enterprise"] as const).map((plan) => {
+                  const price = plan === "basic" ? product.price?.basic ?? 0 : plan === "premium" ? product.price?.premium ?? 0 : product.price?.enterprise ?? 0;
+                  const recommended = product.recommendedPlan === plan;
+                  const disabled = role === "guest";
+                  const inCart = items.some((it) => it.productId === product.id && it.selectedPlan === plan);
+                  return (
+                    <div key={plan} className={`p-4 rounded-xl border ${selectedPlan === plan ? "border-primary/40 shadow-lg" : "border-border"} hover-lift`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium capitalize">{plan}</div>
+                        {recommended && <div className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">Recommended</div>}
+                      </div>
+                      <div className="text-2xl font-display font-bold mb-2">£{price}</div>
+                      <div className="text-xs text-muted-foreground mb-3">Includes up to {product.availableRecords?.toLocaleString() ?? "N/A"} records</div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant={selectedPlan === plan ? "default" : "outline"} onClick={() => setSelectedPlan(plan)} className="flex-1">
+                          Select
+                        </Button>
+                        {inCart ? (
+                          <Button size="sm" variant="ghost" onClick={() => removeItem(product.id, plan)} className="border border-border">
+                            <XIcon className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <Button size="sm" disabled={disabled} onClick={() => {
+                            if (disabled) { setShowUpgrade(true); return; }
+                            addItem({ productId: product.id, productName: product.name, selectedPlan: plan, price });
+                          }} className="gradient-primary border-0 text-primary-foreground">Add to Cart</Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={() => {
+                  if (role === "guest") { setShowUpgrade(true); return; }
+                  // buy now -> add and go to checkout
+                  const price = selectedPlan === "basic" ? product.price?.basic ?? 0 : selectedPlan === "premium" ? product.price?.premium ?? 0 : product.price?.enterprise ?? 0;
+                  addItem({ productId: product.id, productName: product.name, selectedPlan, price });
+                  window.location.href = "/checkout";
+                }} className="gradient-primary border-0 text-primary-foreground">Buy Now</Button>
+                {role === "trial" && <div className="text-sm text-muted-foreground">Trial User — purchases allowed</div>}
+                {role === "guest" && <div className="text-sm text-muted-foreground">Login to view full pricing and purchase</div>}
+              </div>
+            </div>
+
+            <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
           </TabsContent>
 
           {/* Volumes */}
