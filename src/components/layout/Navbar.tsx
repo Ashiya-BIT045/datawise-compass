@@ -24,13 +24,13 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass">
+    <nav className="fixed top-0 left-0 right-0 z-50 navbar-glass">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
             <Zap className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg text-foreground">DataIQ</span>
+          <span className="font-display font-bold text-lg navbar-text">DataIQ</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
@@ -40,8 +40,8 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
               to={l.to}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 location.pathname === l.to
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "navbar-text-active"
+                  : "navbar-text hover:text-foreground hover:bg-muted/20"
               }`}
             >
               {l.label}
@@ -61,16 +61,16 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
               <BarChart3 className="w-3 h-3" /> Premium
             </div>
           )}
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="navbar-text">
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
           {isLoggedIn ? (
             <div className="hidden md:flex items-center gap-2">
-              <Link to="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-sm hover:bg-muted/80 transition-colors">
+              <Link to="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg navbar-text text-sm hover:bg-muted/20 transition-colors">
                 <User className="w-3.5 h-3.5" />
                 {userName}
               </Link>
-              <Button variant="ghost" size="icon" onClick={logout} className="text-muted-foreground">
+              <Button variant="ghost" size="icon" onClick={logout} className="navbar-text">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>

@@ -20,6 +20,40 @@ const Compare = () => {
   const { compareList, clearCompare } = useCompare();
   const navigate = useNavigate();
 
+  const handleExport = () => {
+    // Create CSV content
+    const headers = ["Metric", ...compareList.map(p => p.name)];
+    const rows = [
+      { label: "Category", values: compareList.map((p) => p.category.replace("-", " ")) },
+      { label: "Volume", values: compareList.map((p) => `${(p.volume / 1000000).toFixed(1)}M`) },
+      { label: "Confidence Score", values: compareList.map((p) => `${p.confidenceScore}%`) },
+      { label: "Match Rate", values: compareList.map((p) => `${p.matchRate}%`) },
+      { label: "Price Range", values: compareList.map((p) => p.priceRange) },
+      { label: "Geography", values: compareList.map((p) => p.geography.join("; ")) },
+      { label: "Last Updated", values: compareList.map((p) => p.lastUpdated) },
+      { label: "Compliance", values: compareList.map((p) => p.compliance.join("; ")) },
+    ];
+
+    // Build CSV
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(","),
+      ...rows.map(row => [row.label, ...row.values].map(v => `"${v}"`).join(",")),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `product-comparison-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Comparison exported successfully!");
+  };
+
   if (compareList.length < 2) {
     return (
       <main className="pt-24 pb-12 container mx-auto px-4 text-center">
@@ -57,7 +91,7 @@ const Compare = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={clearCompare}>Clear All</Button>
-            <Button size="sm" className="gradient-primary border-0 text-primary-foreground" onClick={() => toast.success("Comparison exported!")}>
+            <Button size="sm" className="gradient-primary border-0 text-primary-foreground" onClick={handleExport}>
               <Download className="w-4 h-4 mr-1" /> Export
             </Button>
           </div>

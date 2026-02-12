@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, AreaChart, Area,
@@ -53,6 +54,43 @@ const Profile = () => {
 
   const isPaid = role === "paid";
   const isTrial = role === "trial";
+
+  const handleDownload = (fileName: string, records: number, format: string) => {
+    // Create dummy data content based on format
+    let fileContent = "";
+    
+    if (format === "CSV") {
+      fileContent = "ID,Name,Email,Phone,Company\n";
+      for (let i = 1; i <= Math.min(records, 100); i++) {
+        fileContent += `${i},"Company Name ${i}","contact${i}@company.com","020${String(i).padStart(7, '0')}","Business ${i}"\n`;
+      }
+    } else if (format === "JSON") {
+      const data = [];
+      for (let i = 1; i <= Math.min(records, 100); i++) {
+        data.push({
+          id: i,
+          name: `Company Name ${i}`,
+          email: `contact${i}@company.com`,
+          phone: `020${String(i).padStart(7, '0')}`,
+          company: `Business ${i}`
+        });
+      }
+      fileContent = JSON.stringify(data, null, 2);
+    }
+
+    // Create blob and download
+    const blob = new Blob([fileContent], { type: format === "CSV" ? "text/csv" : "application/json" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${fileName.replace(/\s+/g, '-').toLowerCase()}.${format.toLowerCase()}`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success(`Downloaded: ${fileName}`);
+  };
 
   return (
     <main className="pt-20 pb-12">
@@ -207,6 +245,7 @@ const Profile = () => {
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Date</th>
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Records</th>
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Format</th>
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,6 +255,16 @@ const Profile = () => {
                       <td className="px-6 py-3 text-muted-foreground">{d.date}</td>
                       <td className="px-6 py-3">{d.records.toLocaleString()}</td>
                       <td className="px-6 py-3"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">{d.format}</span></td>
+                      <td className="px-6 py-3">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleDownload(d.name, d.records, d.format)}
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                        >
+                          <Download className="w-4 h-4 mr-1" /> Download
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

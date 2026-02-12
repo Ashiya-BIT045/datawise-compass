@@ -55,6 +55,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          className="mt-20"
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm text-primary-foreground/90 mb-8">
             <Shield className="w-3.5 h-3.5" />
