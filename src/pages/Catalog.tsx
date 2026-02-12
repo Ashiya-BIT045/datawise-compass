@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, TrendingUp, ArrowUpDown } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, ArrowUpDown, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { products, categories, Category } from "@/data/products";
+import { useCompare } from "@/contexts/CompareContext";
+import { toast } from "sonner";
 
 type SortKey = "name" | "volume" | "confidence";
 
@@ -16,6 +18,7 @@ const Catalog = () => {
   );
   const [sortBy, setSortBy] = useState<SortKey>("confidence");
   const navigate = useNavigate();
+  const { addToCompare, isInCompare, isMaxed } = useCompare();
 
   const filtered = useMemo(() => {
     let result = products;
@@ -43,34 +46,14 @@ const Catalog = () => {
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search products..."
-                className="pl-10"
-              />
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products..." className="pl-10" />
             </div>
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
               <div className="flex gap-1 flex-wrap">
-                <Button
-                  size="sm"
-                  variant={selectedCategory === "all" ? "default" : "outline"}
-                  onClick={() => setSelectedCategory("all")}
-                  className="rounded-full text-xs"
-                >
-                  All
-                </Button>
+                <Button size="sm" variant={selectedCategory === "all" ? "default" : "outline"} onClick={() => setSelectedCategory("all")} className="rounded-full text-xs">All</Button>
                 {categories.map((c) => (
-                  <Button
-                    key={c.id}
-                    size="sm"
-                    variant={selectedCategory === c.id ? "default" : "outline"}
-                    onClick={() => setSelectedCategory(c.id)}
-                    className="rounded-full text-xs"
-                  >
-                    {c.name}
-                  </Button>
+                  <Button key={c.id} size="sm" variant={selectedCategory === c.id ? "default" : "outline"} onClick={() => setSelectedCategory(c.id)} className="rounded-full text-xs">{c.name}</Button>
                 ))}
               </div>
             </div>
@@ -79,68 +62,78 @@ const Catalog = () => {
             <ArrowUpDown className="w-3.5 h-3.5" />
             Sort:
             {(["confidence", "volume", "name"] as SortKey[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSortBy(s)}
-                className={`capitalize text-xs px-2 py-1 rounded-md transition-colors ${
-                  sortBy === s ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                {s}
-              </button>
+              <button key={s} onClick={() => setSortBy(s)} className={`capitalize text-xs px-2 py-1 rounded-md transition-colors ${sortBy === s ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>{s}</button>
             ))}
           </div>
         </motion.div>
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((p, i) => (
-            <motion.div
-              key={p.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => navigate(`/product/${p.id}`)}
-              className="group cursor-pointer rounded-2xl bg-card border border-border hover:border-primary/30 hover-lift overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
-                    {p.category.replace("-", " ")}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs font-medium text-emerald">
-                    <TrendingUp className="w-3 h-3" />
-                    {p.matchRate}% match
+          {filtered.map((p, i) => {
+            const inCompare = isInCompare(p.id);
+            return (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="group cursor-pointer rounded-2xl bg-card border border-border hover:border-primary/30 hover-lift overflow-hidden"
+              >
+                <div className="p-6" onClick={() => navigate(`/product/${p.id}`)}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">{p.category.replace("-", " ")}</span>
+                    <div className="flex items-center gap-1 text-xs font-medium text-emerald">
+                      <TrendingUp className="w-3 h-3" />
+                      {p.matchRate}% match
+                    </div>
+                  </div>
+                  <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{p.shortDescription}</p>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-muted-foreground">Confidence</span>
+                      <span className="font-mono font-bold text-primary">{p.confidenceScore}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full gradient-primary" style={{ width: `${p.confidenceScore}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{(p.volume / 1000000).toFixed(1)}M records</span>
+                    <span>{p.priceRange}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {p.compliance.slice(0, 3).map((c) => (
+                      <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-muted">{c}</span>
+                    ))}
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{p.shortDescription}</p>
 
-                {/* Confidence bar */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-muted-foreground">Confidence</span>
-                    <span className="font-mono font-bold text-primary">{p.confidenceScore}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full gradient-primary" style={{ width: `${p.confidenceScore}%` }} />
-                  </div>
+                {/* Compare Button */}
+                <div className="px-6 pb-4">
+                  <Button
+                    size="sm"
+                    variant={inCompare ? "default" : "outline"}
+                    className={`w-full text-xs ${inCompare ? "gradient-primary border-0 text-primary-foreground" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (inCompare) return;
+                      if (isMaxed) { toast.error("Maximum 3 products to compare"); return; }
+                      addToCompare(p);
+                      toast.success(`${p.name} added to compare`);
+                    }}
+                  >
+                    {inCompare ? <><Check className="w-3 h-3 mr-1" /> In Compare</> : <><Plus className="w-3 h-3 mr-1" /> Compare</>}
+                  </Button>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{(p.volume / 1000000).toFixed(1)}M records</span>
-                  <span>{p.priceRange}</span>
-                </div>
-
-                <div className="flex flex-wrap gap-1 mt-3">
-                  {p.compliance.slice(0, 3).map((c) => (
-                    <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-muted">{c}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="h-1 w-full gradient-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-            </motion.div>
-          ))}
+                <div className="h-1 w-full gradient-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
+            );
+          })}
         </div>
 
         {filtered.length === 0 && (

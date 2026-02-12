@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Menu, X, Moon, Sun, LogIn, User, LogOut, Zap } from "lucide-react";
+import { Search, Menu, X, Moon, Sun, LogIn, User, LogOut, Zap, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -19,6 +19,8 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
     { to: "/", label: "Home" },
     { to: "/catalog", label: "Catalog" },
     { to: "/search", label: "AI Search" },
+    { to: "/use-cases", label: "Use Cases" },
+    { to: "/trust-center", label: "Trust Center" },
   ];
 
   return (
@@ -36,7 +38,7 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
             <Link
               key={l.to}
               to={l.to}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 location.pathname === l.to
                   ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -49,9 +51,14 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
 
         <div className="flex items-center gap-2">
           {role === "trial" && trialDaysLeft > 0 && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber/10 text-amber text-xs font-medium border border-amber/20">
               <Zap className="w-3 h-3" />
               {trialDaysLeft}d trial left
+            </div>
+          )}
+          {role === "paid" && (
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <BarChart3 className="w-3 h-3" /> Premium
             </div>
           )}
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
@@ -59,10 +66,10 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
           </Button>
           {isLoggedIn ? (
             <div className="hidden md:flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-sm">
+              <Link to="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-sm hover:bg-muted/80 transition-colors">
                 <User className="w-3.5 h-3.5" />
                 {userName}
-              </div>
+              </Link>
               <Button variant="ghost" size="icon" onClick={logout} className="text-muted-foreground">
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -99,6 +106,11 @@ const Navbar = ({ isDark, toggleTheme }: NavbarProps) => {
                   {l.label}
                 </Link>
               ))}
+              {isLoggedIn && (
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted">
+                  Profile
+                </Link>
+              )}
               {!isLoggedIn && (
                 <Link to="/login" onClick={() => setMobileOpen(false)}>
                   <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2">Sign In</Button>

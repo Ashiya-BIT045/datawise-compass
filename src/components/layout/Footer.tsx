@@ -17,16 +17,31 @@ const Footer = () => (
           </p>
         </div>
         {[
-          { title: "Products", links: ["Postal Data", "Telemarketing", "Email Data", "Healthcare"] },
-          { title: "Resources", links: ["Documentation", "API Reference", "Compliance", "Blog"] },
-          { title: "Company", links: ["About", "Careers", "Contact", "Privacy Policy"] },
+          { title: "Products", links: [
+            { label: "Catalog", to: "/catalog" },
+            { label: "AI Search", to: "/search" },
+            { label: "Use Cases", to: "/use-cases" },
+            { label: "Compare", to: "/compare" },
+          ]},
+          { title: "Resources", links: [
+            { label: "Trust Center", to: "/trust-center" },
+            { label: "Documentation", to: "#" },
+            { label: "API Reference", to: "#" },
+            { label: "Blog", to: "#" },
+          ]},
+          { title: "Company", links: [
+            { label: "About", to: "#" },
+            { label: "Careers", to: "#" },
+            { label: "Contact", to: "#" },
+            { label: "Privacy Policy", to: "#" },
+          ]},
         ].map((col) => (
           <div key={col.title}>
             <h4 className="font-semibold text-sm mb-4">{col.title}</h4>
             <ul className="space-y-2.5">
               {col.links.map((l) => (
-                <li key={l}>
-                  <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">{l}</span>
+                <li key={l.label}>
+                  <Link to={l.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -36,9 +51,9 @@ const Footer = () => (
       <div className="mt-12 pt-6 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-xs text-muted-foreground">© 2026 DataIQ. All rights reserved.</p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="hover:text-foreground cursor-pointer">GDPR Compliant</span>
-          <span className="hover:text-foreground cursor-pointer">ISO 27001</span>
-          <span className="hover:text-foreground cursor-pointer">TPS Screened</span>
+          <Link to="/trust-center" className="hover:text-foreground">GDPR Compliant</Link>
+          <Link to="/trust-center" className="hover:text-foreground">ISO 27001</Link>
+          <Link to="/trust-center" className="hover:text-foreground">TPS Screened</Link>
         </div>
       </div>
     </div>

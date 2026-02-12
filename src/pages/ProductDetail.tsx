@@ -1,13 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, MapPin, Shield, TrendingUp, Download } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Shield, TrendingUp, Download, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { products, categories } from "@/data/products";
+import { useCompare } from "@/contexts/CompareContext";
 import GatedContent from "@/components/shared/GatedContent";
+import { toast } from "sonner";
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from "recharts";
 
 const COLORS = ["hsl(221,83%,53%)", "hsl(262,83%,58%)", "hsl(160,84%,39%)", "hsl(43,96%,56%)", "hsl(0,84%,60%)", "hsl(200,80%,50%)"];
@@ -16,6 +18,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const product = products.find((p) => p.id === id);
+  const { addToCompare, isInCompare, isMaxed } = useCompare();
 
   if (!product) {
     return (
@@ -28,7 +31,7 @@ const ProductDetail = () => {
     );
   }
 
-  const cat = categories.find((c) => c.id === product.category);
+  const inCompare = isInCompare(product.id);
 
   return (
     <main className="pt-20 pb-12">
@@ -52,6 +55,18 @@ const ProductDetail = () => {
               <p className="text-muted-foreground max-w-2xl">{product.description}</p>
             </div>
             <div className="flex gap-2 shrink-0">
+              <Button
+                variant={inCompare ? "default" : "outline"}
+                className={inCompare ? "gradient-primary border-0 text-primary-foreground" : ""}
+                onClick={() => {
+                  if (inCompare) return;
+                  if (isMaxed) { toast.error("Maximum 3 products"); return; }
+                  addToCompare(product);
+                  toast.success("Added to compare");
+                }}
+              >
+                {inCompare ? <><Check className="w-4 h-4 mr-1" /> In Compare</> : <><Plus className="w-4 h-4 mr-1" /> Compare</>}
+              </Button>
               <Button variant="outline">Request Sample</Button>
               <Button className="gradient-primary border-0 text-primary-foreground">
                 <Download className="w-4 h-4 mr-1" /> Get Data
@@ -86,7 +101,6 @@ const ProductDetail = () => {
               ))}
             </div>
 
-            {/* Confidence Circle + Pie */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-6 rounded-2xl bg-card border border-border">
                 <h3 className="font-semibold mb-4">Confidence Score</h3>
@@ -94,14 +108,14 @@ const ProductDetail = () => {
                   <div className="relative w-40 h-40">
                     <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                       <circle cx="50" cy="50" r="42" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
-                      <circle
-                        cx="50" cy="50" r="42"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeDasharray={`${product.confidenceScore * 2.64} ${264 - product.confidenceScore * 2.64}`}
-                      />
+                      <circle cx="50" cy="50" r="42" stroke="url(#confGrad)" strokeWidth="8" fill="none" strokeLinecap="round"
+                        strokeDasharray={`${product.confidenceScore * 2.64} ${264 - product.confidenceScore * 2.64}`} />
+                      <defs>
+                        <linearGradient id="confGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="hsl(221,83%,53%)" />
+                          <stop offset="100%" stopColor="hsl(262,83%,58%)" />
+                        </linearGradient>
+                      </defs>
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-3xl font-display font-bold">{product.confidenceScore}%</span>
@@ -119,7 +133,7 @@ const ProductDetail = () => {
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -147,11 +161,17 @@ const ProductDetail = () => {
                   <h3 className="font-semibold mb-4">Volume by Region</h3>
                   <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={product.volumeByRegion}>
+                      <defs>
+                        <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(221,83%,53%)" stopOpacity={1} />
+                          <stop offset="100%" stopColor="hsl(221,83%,53%)" stopOpacity={0.5} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="region" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
-                      <Tooltip />
-                      <Bar dataKey="volume" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }} />
+                      <Bar dataKey="volume" fill="url(#volGrad)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -160,13 +180,19 @@ const ProductDetail = () => {
                     <TrendingUp className="w-4 h-4 text-emerald" /> Growth Trend
                   </h3>
                   <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={product.growthTrend}>
+                    <AreaChart data={product.growthTrend}>
+                      <defs>
+                        <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(160,84%,39%)" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="hsl(160,84%,39%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="volume" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    </LineChart>
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }} />
+                      <Area type="monotone" dataKey="volume" stroke="hsl(160,84%,39%)" fill="url(#growthGrad)" strokeWidth={2} />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -188,7 +214,7 @@ const ProductDetail = () => {
                     </thead>
                     <tbody>
                       {Array.from({ length: 5 }).map((_, row) => (
-                        <tr key={row} className="border-b border-border last:border-0">
+                        <tr key={row} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                           {product.sampleFields.map((f, col) => (
                             <td key={col} className="px-4 py-3 text-muted-foreground">
                               {row < 2 ? `Sample ${f} ${row + 1}` : "••••••••"}
@@ -208,7 +234,7 @@ const ProductDetail = () => {
             <GatedContent feature="dataDictionary">
               <div className="space-y-3">
                 {product.dataDictionary.map((field) => (
-                  <div key={field.field} className="p-4 rounded-xl bg-card border border-border">
+                  <div key={field.field} className="p-4 rounded-xl bg-card border border-border hover:border-primary/20 transition-colors">
                     <div className="flex items-center gap-3 mb-2">
                       <code className="text-sm font-mono font-bold text-primary">{field.field}</code>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{field.type}</span>
@@ -225,16 +251,11 @@ const ProductDetail = () => {
           <TabsContent value="related">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {products
-                .filter((p) => p.id !== product.id && p.category === product.category)
-                .slice(0, 3)
-                .concat(products.filter((p) => p.id !== product.id && p.category !== product.category).slice(0, 3 - products.filter((p) => p.id !== product.id && p.category === product.category).length))
+                .filter((p) => p.id !== product.id)
                 .slice(0, 3)
                 .map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => navigate(`/product/${p.id}`)}
-                    className="cursor-pointer p-5 rounded-2xl bg-card border border-border hover:border-primary/30 hover-lift"
-                  >
+                  <div key={p.id} onClick={() => navigate(`/product/${p.id}`)}
+                    className="cursor-pointer p-5 rounded-2xl bg-card border border-border hover:border-primary/30 hover-lift">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">{p.category.replace("-", " ")}</span>
                     <h3 className="font-semibold mt-2 mb-1">{p.name}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{p.shortDescription}</p>
